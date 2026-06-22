@@ -75,6 +75,16 @@ describe("Epub.buildHTML", function()
         })
         assert.is_not_nil(html:find('href="https://other.test/x"', 1, true))
     end)
+
+    it("adds a source link to the full article", function()
+        local html = Epub.buildHTML({
+            title = "T",
+            url = "https://example.com/articles/123?x=1&y=2",
+            body = "body",
+        })
+        assert.is_not_nil(html:find("Read full article", 1, true))
+        assert.is_not_nil(html:find('href="https://example.com/articles/123?x=1&amp;y=2"', 1, true))
+    end)
 end)
 
 describe("Epub.createFromItem", function()
@@ -82,6 +92,7 @@ describe("Epub.createFromItem", function()
         stubs.enableBackend()
         stubs.backend._result = true
         stubs.backend._raise = nil
+        stubs.backend._load_page = nil
         stubs.backend.last_call = nil
     end)
 
@@ -119,5 +130,28 @@ describe("Epub.createFromItem", function()
         local ok, err = Epub.createFromItem("/tmp/x.epub", { title = "T", body = "b" })
         assert.is_false(ok)
         assert.is_not_nil(err:find("boom", 1, true))
+    end)
+
+    it("can render fetched full article HTML", function()
+        stubs.backend._load_page = { "text/html", "<html><body>full article</body></html>" }
+        local ok = Epub.createFromItem("/tmp/x.epub", {
+            title = "T",
+            body = "feed body",
+            url = "https://example.com/a",
+        }, true, "msg", true)
+        assert.is_true(ok)
+        assert.is_not_nil(stubs.backend.last_call.html:find("full article", 1, true))
+        assert.is_nil(stubs.backend.last_call.html:find("feed body", 1, true))
+    end)
+
+    it("falls back to feed body when full article fetch fails", function()
+        stubs.backend._load_page = { nil, nil }
+        local ok = Epub.createFromItem("/tmp/x.epub", {
+            title = "T",
+            body = "feed body",
+            url = "https://example.com/a",
+        }, true, "msg", true)
+        assert.is_true(ok)
+        assert.is_not_nil(stubs.backend.last_call.html:find("feed body", 1, true))
     end)
 end)

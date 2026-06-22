@@ -66,6 +66,19 @@ function NextcloudNews.onDispatcherRegisterActions()
         title = _("Nextcloud News: toggle star"),
         reader = true,
     })
+    Dispatcher:registerAction("nextcloud_news_next_article", {
+        category = "none",
+        event = "OpenNextOrPreviousFileInFolder",
+        title = _("Nextcloud News: next article"),
+        reader = true,
+    })
+    Dispatcher:registerAction("nextcloud_news_previous_article", {
+        category = "none",
+        event = "OpenNextOrPreviousFileInFolder",
+        arg = true,
+        title = _("Nextcloud News: previous article"),
+        reader = true,
+    })
 end
 
 function NextcloudNews:init()
@@ -91,6 +104,7 @@ function NextcloudNews:loadSettings()
     self.articles_per_sync = data.articles_per_sync or 30
     self.include_images    = data.include_images
     if self.include_images == nil then self.include_images = true end
+    self.download_full_article = data.download_full_article or false
     self.mark_read_on_finished = data.mark_read_on_finished
     if self.mark_read_on_finished == nil then self.mark_read_on_finished = true end
     self.remove_read_locally = data.remove_read_locally or false
@@ -117,6 +131,7 @@ function NextcloudNews:onFlushSettings()
             directory             = self.directory,
             articles_per_sync     = self.articles_per_sync,
             include_images        = self.include_images,
+            download_full_article = self.download_full_article,
             mark_read_on_finished = self.mark_read_on_finished,
             remove_read_locally   = self.remove_read_locally,
             filter_type           = self.filter_type,
@@ -230,6 +245,16 @@ function NextcloudNews:addToMainMenu(menu_items)
                 checked_func = function() return self.include_images end,
                 callback = function()
                     self.include_images = not self.include_images
+                    self.updated = true
+                    self:onFlushSettings()
+                end,
+            },
+            {
+                text = _("Download full article"),
+                keep_menu_open = true,
+                checked_func = function() return self.download_full_article end,
+                callback = function()
+                    self.download_full_article = not self.download_full_article
                     self.updated = true
                     self:onFlushSettings()
                 end,
@@ -641,7 +666,8 @@ function NextcloudNews:synchronize()
                 local msg = T(_("Downloading article %1 of %2…"), processed, total)
                 Trapper:info(msg)
                 local path = self:getArticlePath(item)
-                local created, err = Epub.createFromItem(path, item, self.include_images, msg)
+                local created, err = Epub.createFromItem(
+                    path, item, self.include_images, msg, self.download_full_article)
                 if created then
                     download_count = download_count + 1
                     local_articles[id_str] = path

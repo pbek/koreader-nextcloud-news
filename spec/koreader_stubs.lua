@@ -278,6 +278,7 @@ local backend = {
     last_call = nil,
     _result = true,   -- return value of createEpub
     _raise = nil,     -- if set, createEpub errors with this message
+    _load_page = nil, -- if set, { content_type, content } returned by loadPage
 }
 
 function backend.createEpub(_self, epub_path, html, url, include_images, message)
@@ -287,6 +288,13 @@ function backend.createEpub(_self, epub_path, html, url, include_images, message
     }
     if backend._raise then error(backend._raise) end
     return backend._result
+end
+
+function backend.loadPage(_self, _url)
+    if backend._load_page then
+        return backend._load_page[1], backend._load_page[2]
+    end
+    return nil, nil
 end
 
 -- ---------------------------------------------------------------------------

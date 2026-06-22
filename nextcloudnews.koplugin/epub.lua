@@ -18,6 +18,18 @@ local _ = require("gettext")
 
 local Epub = {}
 
+local function escapeAttribute(value)
+    return tostring(value)
+        :gsub("&", "&amp;")
+        :gsub('"', "&quot;")
+        :gsub("<", "&lt;")
+        :gsub(">", "&gt;")
+end
+
+local function isHTML(content_type)
+    return content_type == "text/html" or content_type == "application/xhtml+xml"
+end
+
 --- Try to load the EPUB backend from the bundled newsdownloader plugin.
 -- @treturn table|nil backend, or nil + error string
 local function getBackend()
@@ -56,6 +68,10 @@ function Epub.buildHTML(item)
     local byline = getByline(item)
     local body = item.body or ""
     local footer = _("Retrieved from Nextcloud News.")
+    if item.url and item.url ~= "" then
+        footer = footer .. " " .. string.format('<a href="%s">%s</a>.',
+            escapeAttribute(item.url), _("Read full article"))
+    end
 
     -- Rewrite root-relative and relative links to absolute, using item.url as
     -- the base, mirroring NewsDownloader's behavior so links remain usable.
@@ -105,9 +121,10 @@ end
 -- @tparam table item Nextcloud News item
 -- @tparam[opt=true] bool include_images
 -- @tparam[opt] string message progress message prefix
+-- @tparam[opt=false] bool download_full_article fetch item.url and render it instead of item.body
 -- @treturn bool ok
 -- @treturn string|nil error message on failure
-function Epub.createFromItem(epub_path, item, include_images, message)
+function Epub.createFromItem(epub_path, item, include_images, message, download_full_article)
     local backend, err = getBackend()
     if not backend then
         return false, err
@@ -118,6 +135,17 @@ function Epub.createFromItem(epub_path, item, include_images, message)
 
     local html = Epub.buildHTML(item)
     local link = item.url or ""
+
+    if download_full_article and link ~= "" and backend.loadPage then
+        local ok, content_type, content = pcall(function()
+            return backend:loadPage(link)
+        end)
+        if ok and isHTML(content_type) and type(content) == "string" and content ~= "" then
+            html = content
+        else
+            logger.warn("Epub.createFromItem: failed to fetch full article, falling back to feed body:", link)
+        end
+    end
 
     local ok, result = pcall(function()
         return backend:createEpub(epub_path, html, link, include_images, message or "")

@@ -58,6 +58,17 @@ directory on the device.
 - While reading an article, **Star/Unstar current article** (in the menu, or
   the _Nextcloud News: toggle star_ gesture action) flags it; the change is
   queued and pushed on the next sync.
+- To move between downloaded articles by gesture, bind a swipe to
+  _Nextcloud News: next article_ and/or _Nextcloud News: previous article_ in
+  KOReader's gesture manager. These actions open the next/previous EPUB in the
+  current download folder.
+- Each generated EPUB includes a **Read full article** link in its footer. Tap
+  or use KOReader's _Follow nearest link_ action on that link to open the
+  original article URL with KOReader's external-link dialog.
+- If your device cannot open an external browser reliably, enable
+  **Download full article** before synchronizing. New downloads will fetch the
+  original article URL and render that page into the local EPUB when possible,
+  falling back to the feed body if the site cannot be fetched.
 
 ## Layout
 
