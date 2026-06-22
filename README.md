@@ -13,12 +13,12 @@ primary target.
 
 ## Naming
 
-| | |
-|---|---|
+|                      |                           |
+| -------------------- | ------------------------- |
 | Repository / project | `koreader-nextcloud-news` |
-| Plugin folder | `nextcloudnews.koplugin` |
-| Plugin id (`name`) | `nextcloud_news` |
-| Display name | Nextcloud News |
+| Plugin folder        | `nextcloudnews.koplugin`  |
+| Plugin id (`name`)   | `nextcloud_news`          |
+| Display name         | Nextcloud News            |
 
 ## Install (development)
 
@@ -49,14 +49,14 @@ directory on the device.
 
 - **Synchronize** (Tools → Nextcloud News → Synchronize, or a bound gesture):
   uploads reading statuses, then downloads new/updated articles as EPUBs.
-- **Sync from** (Tools → Nextcloud News → *Sync from: …*): choose whether to
+- **Sync from** (Tools → Nextcloud News → _Sync from: …_): choose whether to
   download **all articles**, a single **folder**, or a single **feed**. The
   current selection is shown in the menu; changing it re-fetches that scope on
   the next sync.
 - Reading an article to the end marks it **read** on the server on the next
   sync (toggle in settings).
 - While reading an article, **Star/Unstar current article** (in the menu, or
-  the *Nextcloud News: toggle star* gesture action) flags it; the change is
+  the _Nextcloud News: toggle star_ gesture action) flags it; the change is
   queued and pushed on the next sync.
 
 ## Layout
@@ -81,12 +81,12 @@ check                 # syntax + lint + tests (alias: build)
 
 Individual steps (available as devenv scripts and `just` recipes):
 
-| Command | What it does |
-|---|---|
+| Command  | What it does                                              |
+| -------- | --------------------------------------------------------- |
 | `syntax` | `luac -p` (Lua 5.1) + `luajit -bl` over every plugin file |
-| `lint`   | `luacheck` (config in `.luacheckrc`) |
-| `test`   | `busted` headless unit tests in `spec/` |
-| `check`  | all three; `build` is an alias |
+| `lint`   | `luacheck` (config in `.luacheckrc`)                      |
+| `test`   | `busted` headless unit tests in `spec/`                   |
+| `check`  | all three; `build` is an alias                            |
 
 With [`just`](https://github.com/casey/just) installed you can also run
 `just check`, `just test`, `just lint`, `just syntax`, or `just emu`.

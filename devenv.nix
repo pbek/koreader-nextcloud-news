@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 
 let
   # Syntax-check the files passed as arguments with luac (Lua 5.1) and luajit.

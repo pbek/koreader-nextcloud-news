@@ -6,6 +6,7 @@ A KOReader plugin (**Nextcloud News**, plugin id `nextcloud_news`, folder
 (or any KOReader-supported) e-reader, with **two-way read/starred state sync**.
 
 > **Naming**
+>
 > - Repository / project: `koreader-nextcloud-news`
 > - Plugin folder: `nextcloudnews.koplugin`
 > - Plugin id (`name` in `_meta.lua`): `nextcloud_news`
@@ -27,6 +28,7 @@ offline queue) → fetch unread/updated items → render each to a per-article E
 incremental sync.
 
 **Quality gates (all green):**
+
 - `syntax` — `luac -p` + `luajit -bl` on every Lua file.
 - `lint` — `luacheck` (0 warnings/errors).
 - `test` — `busted`, **53 passing unit tests** across `newsapi.lua` (22),
@@ -37,11 +39,12 @@ incremental sync.
 - Runnable in the KOReader desktop emulator on Linux via
   `tools/run-emulator.sh` / `just emu` (uses `nix run nixpkgs#koreader`).
 
-**Not yet done:** on-device/emulator *interactive* runtime testing against a
+**Not yet done:** on-device/emulator _interactive_ runtime testing against a
 live Nextcloud server, and the final vendor-vs-soft-depend decision for the
 EPUB backend. See §4 (M5).
 
 ### Tooling / commands
+
 - Dev shell: `devenv shell` (Lua 5.1 + LuaJIT + busted + luacheck).
 - Scripts (devenv) and `just` recipes: `syntax`, `lint`, `test`,
   `check` (= all three), `build` (= `check`), `emu`.
@@ -51,10 +54,12 @@ EPUB backend. See §4 (M5).
 ## 1. Goal & Scope
 
 ### Problem
+
 Read Nextcloud News feeds on a PocketBook e-reader with a good e-ink reading
 experience and read-state that stays in sync with the server.
 
 ### Decision (rationale recap)
+
 - **Do not** port `nextcloud/news-android` natively to PocketBook. That means
   reimplementing networking, HTML/EPUB rendering, an e-ink UI, WiFi handling,
   and settings against PocketBook's low-level SDK for a single platform.
@@ -67,6 +72,7 @@ experience and read-state that stays in sync with the server.
   reuse the EPUB backend from **`newsdownloader.koplugin`**.
 
 ### In scope (MVP)
+
 - Configure server URL + credentials (Nextcloud app password via HTTP Basic).
 - Fetch folders, feeds, and unread/starred items.
 - Render each item's HTML `body` to an EPUB stored in a dedicated folder.
@@ -75,6 +81,7 @@ experience and read-state that stays in sync with the server.
 - Menu integration in KOReader (file manager + reader Tools menu).
 
 ### Out of scope (initial)
+
 - Adding/removing/renaming feeds and folders from the device.
 - Full-article extraction/readability beyond what the feed `body` provides
   (can reuse NewsDownloader's full-article fetch later).
@@ -95,20 +102,21 @@ Nextcloud News **REST API v1.3** —
 
 ### Endpoints used
 
-| Purpose | Method | Route |
-|---|---|---|
-| Sanity check / config validation | GET | `/version`, `/status` |
-| List folders | GET | `/folders` |
-| List feeds | GET | `/feeds` |
-| Unread items (initial) | GET | `/items?type=3&getRead=false&batchSize=-1` |
-| Starred items (initial) | GET | `/items?type=2&getRead=true&batchSize=-1` |
-| Incremental sync | GET | `/items/updated?lastModified=<ts>&type=3` |
-| Mark read (batch) | PUT | `/items/read/multiple` `{"items":[...]}` |
-| Mark unread (batch) | PUT | `/items/unread/multiple` `{"items":[...]}` |
-| Mark starred (batch) | PUT | `/items/star/multiple` `{"itemIds":[...]}` |
-| Mark unstarred (batch) | PUT | `/items/unstar/multiple` `{"itemIds":[...]}` |
+| Purpose                          | Method | Route                                        |
+| -------------------------------- | ------ | -------------------------------------------- |
+| Sanity check / config validation | GET    | `/version`, `/status`                        |
+| List folders                     | GET    | `/folders`                                   |
+| List feeds                       | GET    | `/feeds`                                     |
+| Unread items (initial)           | GET    | `/items?type=3&getRead=false&batchSize=-1`   |
+| Starred items (initial)          | GET    | `/items?type=2&getRead=true&batchSize=-1`    |
+| Incremental sync                 | GET    | `/items/updated?lastModified=<ts>&type=3`    |
+| Mark read (batch)                | PUT    | `/items/read/multiple` `{"items":[...]}`     |
+| Mark unread (batch)              | PUT    | `/items/unread/multiple` `{"items":[...]}`   |
+| Mark starred (batch)             | PUT    | `/items/star/multiple` `{"itemIds":[...]}`   |
+| Mark unstarred (batch)           | PUT    | `/items/unstar/multiple` `{"itemIds":[...]}` |
 
 ### Item fields of interest
+
 `id`, `guid`, `guidHash`, `url`, `title`, `author`, `pubDate` (unix int),
 `body` (HTML), `feedId`, `unread` (bool), `starred` (bool),
 `lastModified` (string/int), `fingerprint`.
@@ -116,6 +124,7 @@ Nextcloud News **REST API v1.3** —
 ## 3. Architecture
 
 ### Build on KOReader primitives
+
 - `socket.http` / `socketutil` / `ltn12` — HTTP requests + timeouts.
 - `JSON` (`require("json")`) — encode/decode API payloads.
 - `LuaSettings` — persisted plugin settings.
@@ -129,6 +138,7 @@ Nextcloud News **REST API v1.3** —
   `pubDate`/`lastModified` fields to avoid the dependency where possible.
 
 ### Files (current)
+
 ```
 nextcloudnews.koplugin/
   _meta.lua            -- [done] name/fullname/description (translatable)
@@ -145,6 +155,7 @@ spec/
 tools/
   run-emulator.sh      -- [done] launch KOReader via nix run + KO_HOME symlink
 ```
+
 Repo root also contains: `devenv.nix`/`devenv.yaml`/`devenv.lock` (Lua
 toolchain + `syntax`/`lint`/`test`/`check`/`build` scripts), `justfile`
 (same recipes + `emu`/`clean`), `.luacheckrc`, `.busted`, `LICENSE`
@@ -155,6 +166,7 @@ via `pcall(require, "epubdownloadbackend")`, with a clear user-facing error if
 unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
 
 ### State model
+
 - Local download folder is owned exclusively by the plugin (mirror Wallabag's
   warning: existing files may be deleted).
 - Embed the News item `id` in the filename (Wallabag uses `[w-id_<id>] `);
@@ -165,6 +177,7 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
 - Persist `last_sync_lastModified` for incremental sync.
 
 ### Sync flow (per "Synchronize")
+
 1. Validate config; ensure WiFi (`NetworkMgr:runWhenOnline`).
 2. `GET /status` occasionally to surface server misconfiguration warnings.
 3. Flush queued local status changes (PUT batch endpoints).
@@ -181,7 +194,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
 
 ## 4. Milestones
 
-### M0 — Project setup  ✅ done
+### M0 — Project setup ✅ done
+
 - [x] Repo scaffolding, license (full AGPL-3.0 text in `LICENSE`).
 - [x] `_meta.lua` with translatable name/description.
 - [x] devenv dev environment (LuaJIT + Lua 5.1 `luac`) with `check`/`build`
@@ -190,7 +204,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
 - [x] Dev loop documented: KOReader emulator via `tools/run-emulator.sh`
       (`nix run nixpkgs#koreader`, `KO_HOME` + plugin symlink); README covers it.
 
-### M1 — API client (`newsapi.lua`)  ✅ done
+### M1 — API client (`newsapi.lua`) ✅ done
+
 - [x] `callAPI(method, route, body, filepath, quiet)` (Wallabag-style: sink
       table vs. file, `socketutil` timeouts, error classes
       `not_configured`/`bad_url`/`network_error`/`json_error`/`http_error`+code).
@@ -202,7 +217,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
 - [x] `markRead/markUnread/markStarred/markUnstarred` (batch).
 - [x] Unit tests with mocked HTTP responses (`spec/newsapi_spec.lua`, 22 cases).
 
-### M2 — Settings + menu (`main.lua`)  ✅ mostly done
+### M2 — Settings + menu (`main.lua`) ✅ mostly done
+
 - [x] Server settings dialog (URL, username, app password) via
       `MultiInputDialog` (password masked).
 - [x] Download folder picker (`DownloadMgr`).
@@ -218,7 +234,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
       re-fetched. `synchronize` passes the scope to `getItems`/`getUpdatedItems`.
 - [ ] Starred-only filter. (Deferred — out of MVP scope.)
 
-### M3 — Download & render  ✅ done
+### M3 — Download & render ✅ done
+
 - [x] `epub.lua`: soft-depends on `epubdownloadbackend`; `buildHTML(item)`
       renders title/byline/body/footer; `createFromItem` calls `createEpub`
       (must run within `Trapper:wrap`).
@@ -226,7 +243,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
       skip-existing via `getLocalArticles` id map.
 - [x] Image inclusion option; relative→absolute `href` rewriting.
 
-### M4 — Two-way status sync  ✅ done
+### M4 — Two-way status sync ✅ done
+
 - [x] Detect finished articles via `DocSettings` `summary.status == "complete"`
       (`queueFinishedArticles`).
 - [x] Offline status queue (`status_queue` persisted in settings) +
@@ -240,7 +258,8 @@ unavailable (`epub.lua` / `Epub.isAvailable`). Vendoring is deferred to M5.
       starred state per id is persisted (`starred_state`) and refreshed from
       server items each sync so toggles flip the correct direction.
 
-### M5 — Hardening & release  (in progress)
+### M5 — Hardening & release (in progress)
+
 - [x] Error classification + user-facing messages (`describeError`) for
       network/HTTP/config/JSON failures.
 - [x] `GET /status` cron/charset warnings surfaced during sync
@@ -269,6 +288,7 @@ dev loop.
 
 **Not done — and not completable in this sandbox** (each needs a real
 Nextcloud server, a display, and/or a device):
+
 1. Interactive end-to-end run against a live Nextcloud News instance
    (configure → Test connection → Synchronize → read → star → status
    round-trip).
@@ -282,18 +302,19 @@ built and verified headlessly is complete.
 
 ## 5. Risks & Open Questions
 
-| Risk / Question | Mitigation / Decision |
-|---|---|
-| `lib.dateparser` only present if NewsDownloader installed | Prefer integer `pubDate`/`lastModified`; soft-depend, else vendor. |
-| EPUB backend is internal to NewsDownloader | Soft-depend for MVP; vendor a pinned copy before release. |
-| Basic auth over HTTP leaks credentials | Require/encourage HTTPS; use Nextcloud app passwords. |
-| Large unread counts → slow first sync | Use `batchSize` paging; cap via `articles_per_sync`. |
-| Conflict: item changed on server and device | Last-write-wins via queue flush before fetch; document behavior. |
-| URL form differs per Nextcloud setup (`/index.php` vs pretty URLs) | Accept full base URL from user; validate via `/version`. |
-| KOReader API drift across versions | Pin a min KOReader version; test on current stable. |
-| Licensing for upstreaming | Use AGPL-3.0 to match KOReader. |
+| Risk / Question                                                    | Mitigation / Decision                                              |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `lib.dateparser` only present if NewsDownloader installed          | Prefer integer `pubDate`/`lastModified`; soft-depend, else vendor. |
+| EPUB backend is internal to NewsDownloader                         | Soft-depend for MVP; vendor a pinned copy before release.          |
+| Basic auth over HTTP leaks credentials                             | Require/encourage HTTPS; use Nextcloud app passwords.              |
+| Large unread counts → slow first sync                              | Use `batchSize` paging; cap via `articles_per_sync`.               |
+| Conflict: item changed on server and device                        | Last-write-wins via queue flush before fetch; document behavior.   |
+| URL form differs per Nextcloud setup (`/index.php` vs pretty URLs) | Accept full base URL from user; validate via `/version`.           |
+| KOReader API drift across versions                                 | Pin a min KOReader version; test on current stable.                |
+| Licensing for upstreaming                                          | Use AGPL-3.0 to match KOReader.                                    |
 
 ## 6. Reference Material
+
 - Nextcloud News REST API v1.3:
   <https://nextcloud.github.io/news/api/api-v1-3/>
 - KOReader `wallabag.koplugin` (architecture template):

@@ -17,7 +17,7 @@ syntax:
     #!/usr/bin/env bash
     set -euo pipefail
     status=0
-    for f in {{plugin_dir}}/*.lua; do
+    for f in {{ plugin_dir }}/*.lua; do
         if luac -p "$f" 2>/tmp/luac.err; then echo "OK (luac)    $f";
         else echo "FAIL (luac)  $f"; cat /tmp/luac.err; status=1; fi
         if luajit -bl "$f" >/dev/null 2>/tmp/luajit.err; then echo "OK (luajit)  $f";
@@ -27,7 +27,7 @@ syntax:
 
 # Static analysis with luacheck (uses .luacheckrc).
 lint:
-    luacheck {{plugin_dir}} spec
+    luacheck {{ plugin_dir }} spec
 
 # Headless unit tests with busted.
 test:
@@ -42,7 +42,7 @@ build: check
 # Launch the KOReader emulator with this plugin loaded (Linux/SDL).
 # Uses `nix run nixpkgs#koreader`; does not add KOReader to the dev shell.
 emu *ARGS:
-    ./tools/run-emulator.sh {{ARGS}}
+    ./tools/run-emulator.sh {{ ARGS }}
 
 # Remove the emulator scratch home and other generated artifacts.
 clean:

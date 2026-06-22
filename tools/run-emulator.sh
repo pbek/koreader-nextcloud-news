@@ -22,8 +22,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 plugin_src="$repo_root/nextcloudnews.koplugin"
 
 if [[ ! -d "$plugin_src" ]]; then
-    echo "error: plugin directory not found: $plugin_src" >&2
-    exit 1
+  echo "error: plugin directory not found: $plugin_src" >&2
+  exit 1
 fi
 
 ko_home="${KO_HOME:-$repo_root/.devenv/koreader-home}"
