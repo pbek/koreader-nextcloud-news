@@ -27,16 +27,30 @@ if [[ ! -d "$plugin_src" ]]; then
 fi
 
 ko_home="${KO_HOME:-$repo_root/.devenv/koreader-home}"
-mkdir -p "$ko_home/plugins"
+mkdir -p "$ko_home/plugins" "$ko_home/settings"
 
 # (Re)create the symlink to the plugin under the emulator's extra plugin path.
 link="$ko_home/plugins/nextcloudnews.koplugin"
 rm -f "$link"
 ln -s "$plugin_src" "$link"
 
+# If present, use the repo-local ignored settings file for emulator runs. This
+# avoids typing long app passwords into the emulator while keeping secrets out of
+# tracked files.
+repo_settings="$repo_root/settings/nextcloud_news.lua"
+emu_settings="$ko_home/settings/nextcloud_news.lua"
+if [[ -f "$repo_settings" ]]; then
+  lua_settings_path="${repo_settings//\\/\\\\}"
+  lua_settings_path="${lua_settings_path//\"/\\\"}"
+  printf 'return dofile("%s")\n' "$lua_settings_path" >"$emu_settings"
+fi
+
 echo "KOReader emulator:"
 echo "  KO_HOME      = $ko_home"
 echo "  plugin link  = $link -> $plugin_src"
+if [[ -f "$repo_settings" ]]; then
+  echo "  settings     = $emu_settings -> $repo_settings"
+fi
 echo "  starting via 'nix run nixpkgs#koreader' ..."
 echo
 
