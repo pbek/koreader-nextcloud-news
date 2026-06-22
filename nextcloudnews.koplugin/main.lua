@@ -87,7 +87,7 @@ function NextcloudNews:loadSettings()
     self.server_url        = data.server_url
     self.username          = data.username
     self.password          = data.password
-    self.directory         = data.directory
+    self.directory         = self.normalizeDownloadDir(data.directory)
     self.articles_per_sync = data.articles_per_sync or 30
     self.include_images    = data.include_images
     if self.include_images == nil then self.include_images = true end
@@ -337,9 +337,14 @@ end
 -- Download folder helpers
 -- ---------------------------------------------------------------------------
 
+function NextcloudNews.normalizeDownloadDir(path)
+    if not path or path == "" then return nil end
+    return path:match("/$") and path or path .. "/"
+end
+
 function NextcloudNews:hasValidDownloadDir()
-    return self.directory ~= nil and self.directory ~= ""
-        and lfs.attributes(self.directory, "mode") == "directory"
+    local directory = self.normalizeDownloadDir(self.directory)
+    return directory ~= nil and lfs.attributes(directory, "mode") == "directory"
 end
 
 function NextcloudNews:openDownloadFolder()
@@ -723,7 +728,7 @@ end
 function NextcloudNews:setDownloadDirectory(touchmenu_instance)
     require("ui/downloadmgr"):new{
         onConfirm = function(path)
-            self.directory = ("%s/"):format(path)
+            self.directory = self.normalizeDownloadDir(path)
             self.updated = true
             self:onFlushSettings()
             if touchmenu_instance then

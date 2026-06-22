@@ -106,6 +106,18 @@ describe("NextcloudNews:getArticlePath", function()
     end)
 end)
 
+describe("NextcloudNews.normalizeDownloadDir", function()
+    it("adds one trailing slash", function()
+        assert.are.equal("/tmp/news/", NextcloudNews.normalizeDownloadDir("/tmp/news"))
+        assert.are.equal("/tmp/news/", NextcloudNews.normalizeDownloadDir("/tmp/news/"))
+    end)
+
+    it("returns nil for empty paths", function()
+        assert.is_nil(NextcloudNews.normalizeDownloadDir(nil))
+        assert.is_nil(NextcloudNews.normalizeDownloadDir(""))
+    end)
+end)
+
 describe("NextcloudNews:getItemIdForPath", function()
     it("extracts the id from a full path", function()
         local o = newInstance()
