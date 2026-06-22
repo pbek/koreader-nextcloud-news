@@ -796,7 +796,8 @@ function NextcloudNews:chooseFilter(touchmenu_instance)
 
     -- Map folderId -> folder name for grouping feed labels.
     local folder_name = {}
-    for _, f in ipairs(folders) do
+    for i = 1, #folders do
+        local f = folders[i]
         folder_name[f.id] = f.name
     end
 
@@ -819,7 +820,8 @@ function NextcloudNews:chooseFilter(touchmenu_instance)
         text = _("★ All articles"),
         callback = function() pick(nil, nil, _("All articles")) end,
     })
-    for _, folder in ipairs(folders) do
+    for i = 1, #folders do
+        local folder = folders[i]
         local fname = folder.name or _("(unnamed folder)")
         table.insert(items, {
             text = T(_("📁 %1"), fname),
@@ -828,7 +830,8 @@ function NextcloudNews:chooseFilter(touchmenu_instance)
             end,
         })
     end
-    for _, feed in ipairs(feeds) do
+    for i = 1, #feeds do
+        local feed = feeds[i]
         local title = feed.title or _("(unnamed feed)")
         local parent = feed.folderId and folder_name[feed.folderId]
         local label = parent and T(_("%1 / %2"), parent, title) or title
