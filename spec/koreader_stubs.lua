@@ -280,7 +280,7 @@ local backend = {
     _raise = nil,     -- if set, createEpub errors with this message
 }
 
-function backend:createEpub(epub_path, html, url, include_images, message)
+function backend.createEpub(_self, epub_path, html, url, include_images, message)
     backend.last_call = {
         epub_path = epub_path, html = html, url = url,
         include_images = include_images, message = message,

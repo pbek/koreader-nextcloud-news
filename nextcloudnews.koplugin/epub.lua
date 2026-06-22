@@ -25,7 +25,10 @@ local function getBackend()
     if ok and backend then
         return backend
     end
-    return nil, _("The EPUB backend from KOReader's News downloader plugin is not available. Please ensure the News downloader plugin is present.")
+    return nil, _(
+        "The EPUB backend from KOReader's News downloader plugin is not available. " ..
+        "Please ensure the News downloader plugin is present."
+    )
 end
 
 --- Whether the EPUB backend can be loaded.

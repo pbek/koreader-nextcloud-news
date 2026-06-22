@@ -53,7 +53,7 @@ local NextcloudNews = WidgetContainer:extend{
 -- Lifecycle & settings
 -- ---------------------------------------------------------------------------
 
-function NextcloudNews:onDispatcherRegisterActions()
+function NextcloudNews.onDispatcherRegisterActions()
     Dispatcher:registerAction("nextcloud_news_sync", {
         category = "none",
         event = "SynchronizeNextcloudNews",
@@ -260,7 +260,8 @@ function NextcloudNews:addToMainMenu(menu_items)
                 keep_menu_open = true,
                 callback = function()
                     UIManager:show(InfoMessage:new{
-                        text = _([[Synchronizes articles from a Nextcloud News server and saves them as EPUB files, with two-way read/starred state sync.
+                        text = _([[Synchronizes articles from a Nextcloud News server and saves them as EPUB files,
+with two-way read/starred state sync.
 
 Use a Nextcloud app password and an HTTPS server URL.
 
@@ -293,7 +294,7 @@ end
 -- Connection test
 -- ---------------------------------------------------------------------------
 
-function NextcloudNews:describeError(result, code)
+function NextcloudNews.describeError(_self, result, code)
     if result == "http_error" then
         return T(_("HTTP error (%1). Check URL and credentials."), code or "?")
     elseif result == "network_error" then
@@ -385,7 +386,7 @@ end
 --- Extract the Nextcloud News item id encoded in a file path/name.
 -- @tparam string path a file path or bare filename
 -- @treturn number|nil the item id, or nil if the name doesn't encode one
-function NextcloudNews:getItemIdForPath(path)
+function NextcloudNews.getItemIdForPath(_self, path)
     if not path then return nil end
     local name = path:match("[^/]+$") or path
     local id = name:match("^%[nc%-id_(%d+)%]")
@@ -510,7 +511,7 @@ end
 --- Query GET /status and surface server misconfiguration warnings.
 -- Best-effort and non-fatal: a server too old to implement /status, or a
 -- transient error, is ignored so it never blocks a sync.
-function NextcloudNews:checkServerStatus(api)
+function NextcloudNews.checkServerStatus(_self, api)
     local ok, result = api:getStatus()
     if not ok or type(result) ~= "table" then
         return
@@ -521,10 +522,16 @@ function NextcloudNews:checkServerStatus(api)
     end
     local msgs = {}
     if warnings.improperlyConfiguredCron then
-        table.insert(msgs, _("The News app updater is improperly configured on the server; feed updates may be missed."))
+        table.insert(msgs, _(
+            "The News app updater is improperly configured on the server; " ..
+            "feed updates may be missed."
+        ))
     end
     if warnings.incorrectDbCharset then
-        table.insert(msgs, _("The server database charset is misconfigured; updates with unicode characters might fail."))
+        table.insert(msgs, _(
+            "The server database charset is misconfigured; " ..
+            "updates with unicode characters might fail."
+        ))
     end
     if #msgs > 0 then
         UIManager:show(InfoMessage:new{
