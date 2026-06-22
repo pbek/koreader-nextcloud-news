@@ -453,7 +453,8 @@ function NextcloudNews:flushStatusQueue(api)
     end
     -- Group ids by action.
     local buckets = { read = {}, unread = {}, star = {}, unstar = {} }
-    for _, entry in ipairs(self.status_queue) do
+    for i = 1, #self.status_queue do
+        local entry = self.status_queue[i]
         if buckets[entry.action] then
             table.insert(buckets[entry.action], entry.id)
         end
@@ -474,7 +475,8 @@ function NextcloudNews:flushStatusQueue(api)
                 pushed = pushed + #ids
             else
                 -- Keep failed entries queued for the next attempt.
-                for _, id in ipairs(ids) do
+                for i = 1, #ids do
+                    local id = ids[i]
                     table.insert(remaining, { id = id, action = action })
                 end
             end
@@ -603,7 +605,8 @@ function NextcloudNews:synchronize()
     local total = #items
     local processed = 0
 
-    for _, item in ipairs(items) do
+    for i = 1, #items do
+        local item = items[i]
         processed = processed + 1
         local lm = tonumber(item.lastModified) or 0
         if lm > newest_modified then newest_modified = lm end
